@@ -73,3 +73,9 @@ export const FIELD_TYPE={
 	ONE2MANY:"ONE_TO_MANY",
 	FILE:"FILE",
 }
+
+//字段级联类型
+export const CASCADE_TYPE={
+	MANY2MANY:"MANY_TO_MANY",
+	MANY2ONE:"MANY_TO_ONE",
+}
