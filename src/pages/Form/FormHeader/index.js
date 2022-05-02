@@ -36,6 +36,14 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
                     id:origin.id,
                     version:origin.version}]
             };
+        } else if(formType===FORM_TYPE.DETAIL){
+            return {
+                modelid:modelID,
+                list:[{
+                    id:origin.id,
+                    version:origin.version
+                }]
+            };
         }
         return {}
     },[formType,modelID,origin]);
@@ -77,7 +85,7 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
                 data:{
                     operationItem:{
                         ...operation,
-                        input:operationData
+                        input:{...operation.input,...operationData}
                     }
                 }
             };

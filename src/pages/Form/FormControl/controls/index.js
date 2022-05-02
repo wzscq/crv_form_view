@@ -5,6 +5,7 @@ import FileControl from './FileControl';
 import SingleSelect from './SingleSelect';
 import DatePicker from './DatePicker';
 import TextArea from './TextArea';
+import EditTable from './EditTable';
 /**
  * 以下为控件类型枚举常量定义
  */
@@ -15,7 +16,8 @@ import TextArea from './TextArea';
     PASSWORD:"Password",    //密码输入控件
     TRANSFER:"Transfer",    //穿梭框控件
     FILE:"File", //文件选择
-    SINGLESELECT:'SingleSelect'  //单选下拉框
+    SINGLESELECT:'SingleSelect',  //单选下拉框
+    EDITTABLE:'EditTable',  //表格编辑控件
 }
 
 /**
@@ -28,7 +30,8 @@ export const controlRegister={
     [CONTROL_TYPE.FILE]:FileControl,
     [CONTROL_TYPE.SINGLESELECT]:SingleSelect,
     [CONTROL_TYPE.DATEPICKER]:DatePicker,
-    [CONTROL_TYPE.TEXTAREA]:TextArea
+    [CONTROL_TYPE.TEXTAREA]:TextArea,
+    [CONTROL_TYPE.EDITTABLE]:EditTable
 }
 
 export const getControl=(control,field,sendMessageToParent)=>{

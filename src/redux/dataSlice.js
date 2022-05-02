@@ -27,6 +27,7 @@ export const dataSlice = createSlice({
             const {list}=action.payload;
             if(list.length>0){
                 state.data.origin=list[0];
+                state.data.modified=list[0];
                 console.log("setData",state.data.origin)
             }
             state.loaded=true;

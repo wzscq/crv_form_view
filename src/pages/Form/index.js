@@ -44,6 +44,7 @@ export default function Form(){
                                 fieldType:modelField.fieldType,
                                 relatedModelID:modelField.relatedModelID,
                                 relatedField:modelField.relatedField,
+                                associationModelID:modelField.associationModelID,
                                 fields:element.fields
                             });
                         } else {
