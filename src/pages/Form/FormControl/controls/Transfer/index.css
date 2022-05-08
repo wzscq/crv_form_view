@@ -5,6 +5,7 @@
 .control-transfer .ant-space-vertical .ant-space-item:nth-child(2) .ant-transfer .ant-transfer-list
  {
     height: 100%;
+    width: 100%;
 }
 
 .control-transfer .ant-transfer-list-body-search-wrapper {

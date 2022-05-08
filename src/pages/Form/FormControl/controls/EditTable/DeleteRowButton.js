@@ -15,7 +15,7 @@ export default function DeleteRowButton({disabled,rowNo,colNo,onDeleteRow}){
 
     return (
         <div style={wrapperStyle}>
-            <Tooltip title="create new row">
+            <Tooltip title="delete">
                 <Button size="small" disabled={disabled} onClick={()=>onDeleteRow(rowNo)} icon={<MinusOutlined />}/>
             </Tooltip>
         </div>

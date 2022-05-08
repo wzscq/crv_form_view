@@ -193,6 +193,7 @@ export default function TransferControl({control,field,sendMessageToParent}){
     const filterOption = (inputValue, option) => option.description.indexOf(inputValue) > -1;
     let transferControl=(
         <Transfer
+            style={{maxHeight:control.maxHeight?control.maxHeight:"100%"}}
             dataSource={dataSource}
             showSearch
             filterOption={filterOption}

@@ -15,7 +15,7 @@ export default function AddRowButton({disabled,colNo,onAddNewRow}){
 
     return (
         <div style={wrapperStyle}>
-            <Tooltip title="create new row">
+            <Tooltip title="add new row">
                 <Button disabled={disabled} size="small" onClick={onAddNewRow} icon={<PlusOutlined />}/>
             </Tooltip>
         </div>
