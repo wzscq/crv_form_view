@@ -43,15 +43,22 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
     
     const [options,setOptions]=useState([]);
     
-    //console.log('originValue',field.field,originValue,cascadeParentValue);
+    console.log('modifiedValue',field.field,modifiedValue);
 
     const onChange=(value)=>{
-        if(value===undefined){
-            //这里主要是考虑值被删除的时候，将值置为空，
-            //否则删除后由于modifiedValue为undefind，将显示originValue，无法实现删除值的逻辑
-            value=null;
-        }
-        dispatch(modiData({field:field.field,modified:value,modification:value}));
+        
+        const modified=(value===undefined)?{
+                value:null,
+                list:[],
+                total:0,
+                modelID:modifiedValue.modelID
+            }:{
+                value:value,
+                list:[options.find(item=>item.id===value)],
+                total:1,
+                modelID:modifiedValue.modelID
+            }
+        dispatch(modiData({field:field.field,modified:modified,modification:value}));
         if(valueError){
             dispatch(removeErrorField(field.field));
         }
@@ -186,7 +193,7 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
         if(modifiedValue&&item.id===modifiedValue.value){
             hasOriginValue=true;
         }
-        return (<Option key={index} value={item.id}>{item[optionLabel]}</Option>);
+        return (<Option key={item.id} value={item.id}>{item[optionLabel]}</Option>);
     }):[];
 
     if(hasOriginValue===false&&modifiedValue&&modifiedValue.list&&modifiedValue.list.length>0){
@@ -196,7 +203,7 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
 
     let selectControl= (<Select  
         placeholder={control.placeholder?control.placeholder:""} 
-        value={modifiedValue!==undefined?modifiedValue:(originValue?originValue.value:undefined)} 
+        value={modifiedValue!==undefined?modifiedValue.value:undefined} 
         allowClear
         showSearch
         disabled={control.disabled} 

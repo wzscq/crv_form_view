@@ -6,6 +6,7 @@ import SingleSelect from './SingleSelect';
 import DatePicker from './DatePicker';
 import TextArea from './TextArea';
 import EditTable from './EditTable';
+import FunctionTextArea from './FunctionTextArea';
 /**
  * 以下为控件类型枚举常量定义
  */
@@ -18,6 +19,7 @@ import EditTable from './EditTable';
     FILE:"File", //文件选择
     SINGLESELECT:'SingleSelect',  //单选下拉框
     EDITTABLE:'EditTable',  //表格编辑控件
+    FUNCTIONTEXTAREA:'FunctionTextArea', //函数计算文本控件
 }
 
 /**
@@ -31,7 +33,8 @@ export const controlRegister={
     [CONTROL_TYPE.SINGLESELECT]:SingleSelect,
     [CONTROL_TYPE.DATEPICKER]:DatePicker,
     [CONTROL_TYPE.TEXTAREA]:TextArea,
-    [CONTROL_TYPE.EDITTABLE]:EditTable
+    [CONTROL_TYPE.EDITTABLE]:EditTable,
+    [CONTROL_TYPE.FUNCTIONTEXTAREA]:FunctionTextArea
 }
 
 export const getControl=(control,field,sendMessageToParent)=>{

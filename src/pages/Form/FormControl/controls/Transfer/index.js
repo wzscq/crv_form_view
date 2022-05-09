@@ -166,10 +166,10 @@ export default function TransferControl({control,field,sendMessageToParent}){
                 list:list
             },
             modified:{
-                /*modelID:field.relatedModelID,
+                modelID:field.relatedModelID,
                 fieldType:field.fieldType,
-                associationModelID:field.associationModelID,*/
-                list:targetKeys
+                associationModelID:field.associationModelID,
+                list:targetKeys.map(id=>options.find(item=>item.id===id))
             }
         }));
 

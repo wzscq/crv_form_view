@@ -15,7 +15,7 @@ export default function TextAreaControl({control,field}){
     const selectValueError=(state,field)=>state.data.errorField[field];
     const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
         return {originValue,modifiedValue,valueError}
-    })
+    });
     
     const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
 
