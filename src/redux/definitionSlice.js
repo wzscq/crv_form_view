@@ -132,7 +132,6 @@ export const definitionSlice = createSlice({
     initialState,
     reducers: {
         setDefinition: (state,action) => {
-           console.log(action.payload);
            state.modelID=action.payload.modelID;
            state.fields=action.payload.fields;
            state.operations=action.payload.operations;

@@ -7,18 +7,34 @@ import './index.css';
 
 const { Option } = Select;
 
-export default function SingleSelectForOptions({control,field}){
+export default function SingleSelectForOptions({dataPath,control,field}){
     const dispatch=useDispatch();
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
-    });
     
-    const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        return updatedNode[field];
+    };
 
-    console.log('valueError:',valueError);
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    };
+
+    const selectValue=createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+            return {updatedValue,valueError};
+        }
+    );
+    
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
     
     const onChange=(value)=>{
         if(value===undefined){
@@ -26,9 +42,16 @@ export default function SingleSelectForOptions({control,field}){
             //否则删除后由于modifiedValue为undefind，将显示originValue，无法实现删除值的逻辑
             value=null;
         }
-        dispatch(modiData({field:field.field,modified:value,modification:value}));
+        
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:value,
+            update:value}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     }
 
@@ -40,8 +63,9 @@ export default function SingleSelectForOptions({control,field}){
     (<Option key={index} value={item.value}>{item.label}</Option>));
     
     let selectControl= (<Select  
+        style={{width:'100%'}}  
         placeholder={control.placeholder?control.placeholder:""} 
-        value={modifiedValue!==undefined?modifiedValue:originValue} 
+        value={updatedValue} 
         allowClear
         disabled={control.disabled} 
         onChange={onChange}
@@ -54,6 +78,11 @@ export default function SingleSelectForOptions({control,field}){
         <Tooltip title={valueError.message}>
             {selectControl}
         </Tooltip>):selectControl;
+    
+    if(control.inline){
+        return selectControl;
+    }
+    
     //(modifiedValue!==undefined)?'control-text-modified':
     const className=valueError?'control-select-error':'control-select-normal';
 

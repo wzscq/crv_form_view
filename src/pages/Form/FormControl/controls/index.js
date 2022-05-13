@@ -37,10 +37,14 @@ export const controlRegister={
     [CONTROL_TYPE.FUNCTIONTEXTAREA]:FunctionTextArea
 }
 
-export const getControl=(control,field,sendMessageToParent)=>{
+export const getControl=(control,field,sendMessageToParent,dataPath)=>{
     const Component=controlRegister[control.controlType];
     if(Component){
-        return <Component sendMessageToParent={sendMessageToParent} control={control} field={field}/>;
+        return <Component 
+            dataPath={dataPath} 
+            sendMessageToParent={sendMessageToParent} 
+            control={control} 
+            field={field}/>;
     }
     return (<div>{"unkown control:"+control.controlType}</div>);
 }

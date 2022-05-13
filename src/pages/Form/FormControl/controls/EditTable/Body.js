@@ -1,16 +1,14 @@
 import Row from "./Row";
 
-export default function Body({control,data,onDeleteRow,onEditCell,cascadeValue,sendMessageToParent}){
-    const rows=(data&&data.list)?data.list.map((row,index)=>{
+export default function Body({dataPath,control,data,onDeleteRow,sendMessageToParent}){
+    const rows=(data&&data.list)?Object.keys(data.list).map((rowKey,index)=>{
         return (
             <Row 
-                key={index} 
+                dataPath={[...dataPath,rowKey]}
+                key={rowKey} 
+                rowKey={rowKey}
                 control={control} 
-                row={row} 
-                rowNo={index} 
                 onDeleteRow={onDeleteRow}
-                onEditCell={onEditCell}
-                cascadeValue={cascadeValue}
                 sendMessageToParent={sendMessageToParent}
             />
         );

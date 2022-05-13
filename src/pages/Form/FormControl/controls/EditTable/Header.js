@@ -2,11 +2,11 @@ import AddRowButton from "./AddRowButton";
 
 export default function Header({control,onAddNewRow}){
     let gridTemplateColumns='';
-    const columns=control.fields
+    const columns=control.controls
         .filter(item=>item.visible)
         .map((field,index)=>{
         gridTemplateColumns+=(field.width?(field.width+'px '):'auto ');
-        console.log(field,gridTemplateColumns);
+        
         const wrapperStyle={
             gridColumnStart:index+1,
             gridColumnEnd:index+2,

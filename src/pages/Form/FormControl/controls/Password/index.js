@@ -5,32 +5,53 @@ import {useRef,useEffect} from 'react';
 
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 import {encodePassword} from '../../../../../utils/passwordEncoder';
-//import './index.css';
-import { useState } from 'react';
 
-export default function Password({control,field}){
+export default function Password({dataPath,control,field}){
     const dispatch=useDispatch();
     const inputRef = useRef(null);
-    const [value,setValue]=useState(undefined);
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
-    })
+
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        
+        return updatedNode[field];
+    };
+
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    }
+
+    const selectValue=createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+        return {updatedValue,valueError}
+    });
     
-    const {originValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
 
     const onChange=(e)=>{
-        console.log(e.target.value);
-        setValue(e.target.value);
         let password=e.target.value;
         if(password){
             password=encodePassword(password);
         }
-        dispatch(modiData({field:field.field,modified:password,modification:password}));
+        
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:e.target.value,
+            update:password}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     }
 
@@ -40,7 +61,7 @@ export default function Password({control,field}){
 
     let passwordControl=(
         <Input.Password  
-            value={value!==undefined?value:originValue} 
+            value={updatedValue} 
             disabled={control.disabled} 
             onChange={onChange}
             status={valueError?'error':null}

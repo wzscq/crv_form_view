@@ -12,40 +12,70 @@ import {
 } from '../../../../../utils/constant';
 import './index.css';
 
-export default function TransferControl({control,field,sendMessageToParent}){
+export default function TransferControl({dataPath,control,field,sendMessageToParent}){
     const {origin,item:frameItem}=useSelector(state=>state.frame);
     const dispatch=useDispatch();
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectCascadeParentValue=(state,field,cascade)=>{
-        console.log('selectCascadeParentValue',field,cascade);
+    
+    const selectOriginValue=(data,dataPath,field)=>{
+        let originNode=data.origin;
+        for(let i=0;i<dataPath.length;++i){
+            originNode=originNode[dataPath[i]];
+            if(!originNode){
+                return undefined;
+            }
+        }
+        return originNode[field];
+    };
+    
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        return updatedNode[field];
+    };
+
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    };
+
+    const selectCascadeParentValue=(data,dataPath,field,cascade)=>{
         if(cascade&&cascade.parentField){
-            if(state.data.modified[cascade.parentField]){
-                const modifiedValue=state.data.modified[cascade.parentField];
-                return modifiedValue.value?modifiedValue.value:modifiedValue;
-            } /*else if(state.data.origin[cascade.parentField]) {
-                const orginValue=state.data.origin[cascade.parentField];
-                return orginValue.value?orginValue.value:undefined;
-            }*/
+            let updatedNode=data.updated;
+            for(let i=0;i<dataPath.length;++i){
+                updatedNode=updatedNode[dataPath[i]];
+                if(!updatedNode){
+                    return undefined;
+                }
+            }
+            
+            if(updatedNode[cascade.parentField]){
+                const cascadeValue=updatedNode[cascade.parentField];
+                return cascadeValue.value?cascadeValue.value:cascadeValue;
+            }
         }
         return undefined;
-    }
+    };
 
     const selectValue=createSelector(
         selectOriginValue,
-        selectModifiedValue,
+        selectUpdatedValue,
         selectValueError,
         selectCascadeParentValue,
-        (originValue,modifiedValue,valueError,cascadeParentValue)=>{
-            return {originValue,modifiedValue,valueError,cascadeParentValue}
+        (originValue,updatedValue,valueError,cascadeParentValue)=>{
+            return {originValue,updatedValue,valueError,cascadeParentValue};
         }
     );
-    const {originValue,modifiedValue,valueError,cascadeParentValue}=useSelector(state=>selectValue(state.data,field.field,control.cascade));
-    const [targetKeys,setTargetKeys]=useState(originValue?originValue.list.map(item=>item.id):[]);
-    const [options,setOptions]=useState([]);
-    console.log('originValue',field.field,originValue,cascadeParentValue);
+    
+    const {originValue,updatedValue,valueError,cascadeParentValue}=useSelector(state=>selectValue(state.data,dataPath,field.field,control.cascade));
 
+    const [targetKeys,setTargetKeys]=useState(updatedValue?updatedValue.list.map(item=>item.id):[]);
+    const [options,setOptions]=useState([]);
+    
     const getQueryParams=useCallback((field,control)=>{
         console.log('getQueryParams',control);
         let filter=undefined;
@@ -120,13 +150,11 @@ export default function TransferControl({control,field,sendMessageToParent}){
     },[field]);
 
     useEffect(()=>{
-        console.log('loadOptions');
         setOptions([]);
         loadOptions();
     },[loadOptions]);
 
     const handleChange = targetKeys => {
-        console.log('handleChange',targetKeys);
         const saveType={};
         saveType[CC_COLUMNS.CC_SAVE_TYPE]=SAVE_TYPE.CREATE;
         const addList=targetKeys.map(key=>{
@@ -138,8 +166,6 @@ export default function TransferControl({control,field,sendMessageToParent}){
             }
         });
 
-        console.log('addList',addList);
-
         saveType[CC_COLUMNS.CC_SAVE_TYPE]=SAVE_TYPE.DELETE;
         const delList=originValue?originValue.list.map(item=>{
             const newItem=addList.find(element=>element.id===item.id);
@@ -150,31 +176,29 @@ export default function TransferControl({control,field,sendMessageToParent}){
             }
         }):[];
 
-        console.log('delList',delList);
-
         const list = addList.concat(delList).filter(item=>item[CC_COLUMNS.CC_SAVE_TYPE]);
 
-        console.log('list',list);
-
         setTargetKeys(targetKeys);
+    
         dispatch(modiData({
+            dataPath:dataPath,
             field:field.field,
-            modification:{
-                modelID:field.relatedModelID,
-                fieldType:field.fieldType,
-                associationModelID:field.associationModelID,
-                list:list
-            },
-            modified:{
+            updated:{
                 modelID:field.relatedModelID,
                 fieldType:field.fieldType,
                 associationModelID:field.associationModelID,
                 list:targetKeys.map(id=>options.find(item=>item.id===id))
-            }
-        }));
-
+            },
+            update:{
+                modelID:field.relatedModelID,
+                fieldType:field.fieldType,
+                associationModelID:field.associationModelID,
+                list:list
+            }}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     };
 

@@ -7,25 +7,49 @@ import moment from 'moment';
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 //import './index.css';
 
-export default function DatePickerControl({control,field}){
+export default function DatePickerControl({dataPath,control,field}){
     const dispatch=useDispatch();
     const inputRef = useRef(null);
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
-    })
     
-    const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        
+        return updatedNode[field];
+    };
 
-    console.log('valueError:',valueError);
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    }
+
+    const selectValue=createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+        return {updatedValue,valueError}
+    });
     
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
+
     const onChange=(date,dateString)=>{
-        console.log(dateString);
-        dispatch(modiData({field:field.field,modified:dateString,modification:dateString}));
+        const value=date?dateString:null;
+
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:value,
+            update:value}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     }
 
@@ -40,7 +64,7 @@ export default function DatePickerControl({control,field}){
     //获取文本输入框的标签，如果form控件配置了label属性则直接使用，
     //如果控件没有配置label属性，则取字段配置的字段name
     const label=control.label?control.label:(field?field.name:"");
-    let value=modifiedValue!==undefined?modifiedValue:originValue;
+    let value=updatedValue;
     if(value&&value.length>0){
         value=moment(value);
     }

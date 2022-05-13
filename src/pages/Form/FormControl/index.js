@@ -1,6 +1,6 @@
 import {getControl} from './controls';
 
-export default function FormControl({item,field,sendMessageToParent}){
+export default function FormControl({dataPath,item,field,sendMessageToParent}){
     const {row,col,rowSpan,colSpan}=item;
     const wrapperStyle={
         gridColumnStart:col,
@@ -13,7 +13,7 @@ export default function FormControl({item,field,sendMessageToParent}){
     
     return (
         <div style={wrapperStyle}>
-            {getControl(item,field,sendMessageToParent)}
+            {getControl(item,field,sendMessageToParent,dataPath)}
         </div>
     );
 }
