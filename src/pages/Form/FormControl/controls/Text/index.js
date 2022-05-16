@@ -4,27 +4,48 @@ import { useEffect,useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
-//import './index.css';
 
-export default function Text({control,field}){
+export default function Text({dataPath,control,field}){
     const dispatch=useDispatch();
     const inputRef = useRef(null);
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
-    })
-    
-    const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
+        
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        
+        return updatedNode[field];
+    };
 
-    console.log('valueError:',valueError);
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    }
+
+    const selectValue=createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+        return {updatedValue,valueError}
+    });
     
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
+
     const onChange=(e)=>{
-        console.log(e.target.value);
-        dispatch(modiData({field:field.field,modified:e.target.value,modification:e.target.value}));
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:e.target.value,
+            update:e.target.value}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     }
 
@@ -43,23 +64,24 @@ export default function Text({control,field}){
     let inputControl=(
         <Input  
             placeholder={control.placeholder?control.placeholder:""} 
-            value={modifiedValue!==undefined?modifiedValue:originValue} 
+            value={updatedValue} 
             allowClear
             disabled={control.disabled} 
             onChange={onChange}
             ref={inputRef}
             status={valueError?'error':null}
-            />
-    );
+        />);
 
     inputControl=valueError?(
         <Tooltip title={valueError.message}>
             {inputControl}
         </Tooltip>):inputControl
 
-    //(modifiedValue!==undefined)?'control-text-modified':
-    const className=valueError?'control-text-error':'control-text-normal';
+    if(control.inline){
+        return inputControl;
+    }
 
+    const className=valueError?'control-text-error':'control-text-normal';
     return (
         <div className={className}>
             <Space size={2} direction="vertical" style={{width:'100%'}}>

@@ -12,6 +12,7 @@ import {
 export default function useFrame(){
     const dispatch=useDispatch();
     const {origin}=useSelector(state=>state.frame);
+    const {forms} = useSelector(state=>state.definition);
 
     const sendMessageToParent=useCallback((message)=>{
         if(origin){
@@ -32,7 +33,7 @@ export default function useFrame(){
             if(dataType===DATA_TYPE.MODEL_CONF){
                 dispatch(setDefinition(data));
             } else if (dataType===DATA_TYPE.QUERY_RESULT){
-                dispatch(setData(data));
+                dispatch(setData({data,controls:forms[0].controls}));
             } else {
                 console.log("update data with wrong data type:",dataType);
             }
@@ -40,14 +41,14 @@ export default function useFrame(){
             console.log("reload data");
             dispatch(refreshData());
         }
-    },[dispatch]);
+    },[dispatch,forms]);
         
     useEffect(()=>{
         window.addEventListener("message",receiveMessageFromMainFrame);
         return ()=>{
             window.removeEventListener("message",receiveMessageFromMainFrame);
         }
-    });
+    },[receiveMessageFromMainFrame]);
 
     return sendMessageToParent;
 }

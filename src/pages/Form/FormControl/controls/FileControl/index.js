@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { Space,Button,Upload,Tooltip } from 'antd';
@@ -13,27 +13,49 @@ import {createDownloadFileMessage} from '../../../../../utils/normalOperations';
 
 import './index.css';
 
-export default function FileControl({control,field,sendMessageToParent}){
+export default function FileControl({dataPath,control,field,sendMessageToParent}){
     const dispatch=useDispatch();
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
-    });
     
-    const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
-    let initFileList=[];
-    if(originValue){
-        initFileList=originValue.list.map(item=>
-        {
-            return {
-                ...item,
-                uid:item.id,
-                status: 'done',
+    const selectOriginValue=(data,dataPath,field)=>{
+        let originNode=data.origin;
+        for(let i=0;i<dataPath.length;++i){
+            originNode=originNode[dataPath[i]];
+            if(!originNode){
+                return undefined;
             }
-        });
-    }
+        }
+        return originNode[field];
+    };
+
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    };
+
+    const selectValue=createSelector(
+        selectOriginValue,
+        selectValueError,
+        (originValue,valueError)=>{
+            return {originValue,valueError};
+        }
+    );
+    
+    const {originValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
+
+    const initFileList=useMemo(()=>{
+        if(originValue){
+            return originValue.list.map(item=>
+            {
+                return {
+                    ...item,
+                    uid:item.id,
+                    status: 'done',
+                }
+            });
+        }
+        return [];
+    },[originValue]);
+    
     const [fileList,setFileList]=useState(initFileList);
 
     const className=valueError?'control-singlefile control-singlefile-error':'control-singlefile control-singlefile-normal';
@@ -72,17 +94,17 @@ export default function FileControl({control,field,sendMessageToParent}){
 
         const list = addList.concat(delList).filter(item=>item[CC_COLUMNS.CC_SAVE_TYPE]);
         dispatch(modiData({
+            dataPath:dataPath,
             field:field.field,
-            modification:{
-                fieldType:field.fieldType,
-                list:list
-            },
-            modified:{
+            updated:{
                 fieldType:field.fieldType,
                 list:data
-            }
-        }));
-    },[fileList,dispatch,field,originValue]);
+            },
+            update:{
+                fieldType:field.fieldType,
+                list:list
+            }}));
+    },[fileList,dispatch,field,dataPath,originValue]);
 
     const props = {
         accept:control.accept,
@@ -105,7 +127,8 @@ export default function FileControl({control,field,sendMessageToParent}){
                 const fileTmp={uid:file.uid,name:file.name,contentBase64:e.target.result};
                 setFileList([...fileList,fileTmp]);
                 if(valueError){
-                    dispatch(removeErrorField(field.field));
+                    const errFieldPath=dataPath.join('.')+'.'+field.field;
+                    dispatch(removeErrorField(errFieldPath));
                 }
             };
             reader.readAsDataURL(file);

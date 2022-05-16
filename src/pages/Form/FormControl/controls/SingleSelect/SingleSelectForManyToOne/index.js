@@ -1,4 +1,4 @@
-import {useCallback, useState} from 'react';
+import {useState} from 'react';
 import { createSelector } from '@reduxjs/toolkit';
 import {Select,Space,Tooltip } from 'antd';
 import { useEffect } from 'react';
@@ -10,57 +10,100 @@ import './index.css';
 
 const { Option } = Select;
 
-export default function SingleSelectForManyToOne({control,field,sendMessageToParent}){
+export default function SingleSelectForManyToOne({dataPath,control,field,sendMessageToParent,cascadeValue}){
     const dispatch=useDispatch();
     const {origin,item:frameItem}=useSelector(state=>state.frame);
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectCascadeParentValue=(state,field,cascade)=>{
-        console.log('selectCascadeParentValue',field,cascade);
+    
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        return updatedNode[field];
+    };
+
+    const selectValueError=(data,dataPath,field)=>{
+        const errFieldPath=dataPath.join('.')+'.'+field;
+        return data.errorField[errFieldPath];
+    };
+
+    const selectCascadeParentValue=(data,dataPath,field,cascade)=>{
         if(cascade&&cascade.parentField){
-            if(state.data.modified[cascade.parentField]){
-                const modifiedValue=state.data.modified[cascade.parentField];
-                return modifiedValue.value?modifiedValue.value:modifiedValue;
-            } /*else if(state.data.origin[cascade.parentField]) {
-                const orginValue=state.data.origin[cascade.parentField];
-                return orginValue.value?orginValue.value:undefined;
-            }*/
+            let pathDeep=dataPath.length;
+            if(cascade.parentPath){
+                const pathArr=cascade.parentPath.split('/');
+                for(let i=0;i<pathArr.length;++i){
+                    if(pathArr[i]==='..'){
+                        /**
+                         *dataPaht的形式类似[rowKey,fieldid,list,rowkey,fieldid,list,rowKey,fieldid,list, ...] 
+                         *当前字段节点的path一定是一个rowKey节点，往上一层需要自动跳转到上一个rowKey节点
+                         *两个rowKey间的间隔是3，因此遇到一个..，则路径深度减3
+                         */
+                        pathDeep-=3;
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            let updatedNode=data.updated;
+            for(let i=0;i<pathDeep;++i){
+                updatedNode=updatedNode[dataPath[i]];
+                if(!updatedNode){
+                    return undefined;
+                }
+            }
+            
+            if(updatedNode[cascade.parentField]){
+                const cascadeValue=updatedNode[cascade.parentField];
+                return cascadeValue.value?cascadeValue.value:cascadeValue;
+            }
         }
         return undefined;
-    }
+    };
 
     const selectValue=createSelector(
-        selectOriginValue,
-        selectModifiedValue,
+        selectUpdatedValue,
         selectValueError,
         selectCascadeParentValue,
-        (originValue,modifiedValue,valueError,cascadeParentValue)=>{
-            return {originValue,modifiedValue,valueError,cascadeParentValue}
+        (updatedValue,valueError,cascadeParentValue)=>{
+            return {updatedValue,valueError,cascadeParentValue};
         }
     );
-    const {originValue,modifiedValue,valueError,cascadeParentValue}=useSelector(state=>selectValue(state.data,field.field,control.cascade));
     
+    const {updatedValue,valueError,cascadeParentValue}=useSelector(state=>selectValue(state.data,dataPath,field.field,control.cascade));
+
     const [options,setOptions]=useState([]);
     
-    console.log('modifiedValue',field.field,modifiedValue);
-
     const onChange=(value)=>{
-        
-        const modified=(value===undefined)?{
+        if(value===undefined){
+            value=null;
+        }
+
+        const updated=(value===null)?{
                 value:null,
                 list:[],
                 total:0,
-                modelID:modifiedValue.modelID
+                modelID:field.relatedModelID
             }:{
                 value:value,
                 list:[options.find(item=>item.id===value)],
                 total:1,
-                modelID:modifiedValue.modelID
+                modelID:field.relatedModelID
             }
-        dispatch(modiData({field:field.field,modified:modified,modification:value}));
+
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:updated,
+            update:value}));
+        
         if(valueError){
-            dispatch(removeErrorField(field.field));
+            const errFieldPath=dataPath.join('.')+'.'+field.field;
+            dispatch(removeErrorField(errFieldPath));
         }
     }
 
@@ -111,7 +154,6 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
                     const filterbyParent={[control.cascade.relatedField]:cascadeParentValue}
                     const op='Op.and';
                     const mergedFilter={[op]:[filterbyParent,filter]};
-                    console.log('mergedFilter:',mergedFilter);
                     return {
                         modelID:field.relatedModelID,
                         fields:control.fields,
@@ -155,7 +197,7 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
                     queryParams:queryParams
                 }
             }
-            console.log('TransferControl send query message',message);
+            
             sendMessageToParent(message);
         }
     };
@@ -169,7 +211,6 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
             const {type,dataKey,data}=event.data;
             if(type===FRAME_MESSAGE_TYPE.QUERY_RESPONSE&&
                 dataKey===field.field){
-                console.log('queryResponse',data);
                 setOptions(data.list);
             }
         }
@@ -190,20 +231,21 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
     
     let hasOriginValue=false;
     const optionControls=options?options.map((item,index)=>{
-        if(modifiedValue&&item.id===modifiedValue.value){
+        if(updatedValue&&item.id===updatedValue.value){
             hasOriginValue=true;
         }
         return (<Option key={item.id} value={item.id}>{item[optionLabel]}</Option>);
     }):[];
 
-    if(hasOriginValue===false&&modifiedValue&&modifiedValue.list&&modifiedValue.list.length>0){
-        const item=modifiedValue.list[0];
+    if(hasOriginValue===false&&updatedValue&&updatedValue.list&&updatedValue.list.length>0){
+        const item=updatedValue.list[0];
         optionControls.push(<Option key={'origin'} value={item.id}>{item[optionLabel]}</Option>);
     }
 
-    let selectControl= (<Select  
+    let selectControl= (<Select
+        style={{width:'100%'}}  
         placeholder={control.placeholder?control.placeholder:""} 
-        value={modifiedValue!==undefined?modifiedValue.value:undefined} 
+        value={updatedValue?updatedValue.value:updatedValue} 
         allowClear
         showSearch
         disabled={control.disabled} 
@@ -223,6 +265,11 @@ export default function SingleSelectForManyToOne({control,field,sendMessageToPar
         <Tooltip title={valueError.message}>
             {selectControl}
         </Tooltip>):selectControl;
+    
+    if(control.inline){
+        return selectControl;
+    }
+    
     //(modifiedValue!==undefined)?'control-text-modified':
     const className=valueError?'control-select-error':'control-select-normal';
 

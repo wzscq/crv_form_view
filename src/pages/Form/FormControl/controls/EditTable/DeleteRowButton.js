@@ -1,7 +1,7 @@
 import { Button, Tooltip } from 'antd';
 import {MinusOutlined} from '@ant-design/icons';
 
-export default function DeleteRowButton({disabled,rowNo,colNo,onDeleteRow}){
+export default function DeleteRowButton({disabled,rowKey,colNo,onDeleteRow}){
     const wrapperStyle={
         gridColumnStart:colNo+1,
         gridColumnEnd:colNo+2,
@@ -16,7 +16,7 @@ export default function DeleteRowButton({disabled,rowNo,colNo,onDeleteRow}){
     return (
         <div style={wrapperStyle}>
             <Tooltip title="delete">
-                <Button size="small" disabled={disabled} onClick={()=>onDeleteRow(rowNo)} icon={<MinusOutlined />}/>
+                <Button size="small" disabled={disabled} onClick={()=>onDeleteRow(rowKey)} icon={<MinusOutlined />}/>
             </Tooltip>
         </div>
     );

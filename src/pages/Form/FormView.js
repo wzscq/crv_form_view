@@ -8,9 +8,14 @@ import './FormView.css';
 
 export default function FormView({fromTitle,formType,sendMessageToParent}){
     const {forms,fields,operations} = useSelector(state=>state.definition);
+    const rowKey = useSelector(state=>{
+        return Object.keys(state.data.updated)[0]
+    });
 
-    console.log('FormView');
-
+    const dataPath=useMemo(()=>{
+        return [rowKey];
+    },[rowKey]);
+    
     const form=useMemo(()=>{
         if(forms.length>0){
             return forms[0];
@@ -27,16 +32,16 @@ export default function FormView({fromTitle,formType,sendMessageToParent}){
                 //如果是编辑页面，则将ID字段置为不可修改,详情页面则所有字段都不允许修改
                 if((item.field==='id'&&formType===FORM_TYPE.EDIT)||
                     formType===FORM_TYPE.DETAIL){
-                    return (<FormControl sendMessageToParent={sendMessageToParent}  item={{...item,disabled:true}} field={field} key={index} />);
+                    return (<FormControl dataPath={dataPath} sendMessageToParent={sendMessageToParent}  item={{...item,disabled:true}} field={field} key={index} />);
                 } else {
-                    return (<FormControl sendMessageToParent={sendMessageToParent} item={item} field={field} key={index} />);
+                    return (<FormControl dataPath={dataPath} sendMessageToParent={sendMessageToParent} item={item} field={field} key={index} />);
                 }
             });
             return {controls,colCount,rowHeight}
         } else {
             return {controls:[],colCount:1,rowHeight:30}
         }
-    },[form,fields,formType,sendMessageToParent]);
+    },[form,fields,formType,dataPath,sendMessageToParent]);
 
     const {headerLabel,headerOperations}=useMemo(()=>{
         let headerLabel=null;

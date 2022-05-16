@@ -1,29 +1,60 @@
 import {FIELD_TYPE} from  '../../utils/constant';
 
-const validateField=(item,values)=>{
-    if(item.required){
-        if(values[item.field]){
-            if(values[item.field].fieldType){
-                if(values[item.field].fieldType===FIELD_TYPE.MANY2MANY||
-                    values[item.field].fieldType===FIELD_TYPE.ONE2MANY||
-                    values[item.field].fieldType===FIELD_TYPE.MANY2ONE||
-                    values[item.field].fieldType===FIELD_TYPE.FILE){
-                    if(!(values[item.field].list&&values[item.field].list.length>0)){
-                        return {message:'必填字段！'};    
+const validateField=(dataPath,control,rowValue,errorField)=>{
+    const {required,field}=control;
+    
+    if(required){
+        if(rowValue[field]){
+            if(rowValue[field].fieldType){
+                if(rowValue[field].fieldType===FIELD_TYPE.MANY2MANY||
+                   rowValue[field].fieldType===FIELD_TYPE.ONE2MANY||
+                   rowValue[field].fieldType===FIELD_TYPE.MANY2ONE||
+                   rowValue[field].fieldType===FIELD_TYPE.FILE){
+                    if(!(rowValue[field].list&&rowValue[field].list.length>0)){
+                        errorField.errorField[dataPath+'.'+field]={message:'必填字段！'}; 
                     }
-                }   
+                }
             } else {
-                if(values[item.field].length<=0){
-                    return {message:'必填字段！'};
+                if(rowValue[field].length<=0){
+                    errorField.errorField[dataPath+'.'+field]={message:'必填字段！'};
                 }
             }
         } else {
-            return {message:'必填字段！'};
+            errorField.errorField[dataPath+'.'+field]={message:'必填字段！'};
         }
     }
-    return false;
+}
+
+const subValueValidate=(dataPath,controls,values,errorField)=>{
+    controls.forEach(control => {
+        if(control.field){
+            for(const rowKey in values){
+                const row=values[rowKey];
+                if(control.controls){
+                    subValueValidate(dataPath+'.'+rowKey+'.list',control.controls,row[control.field].list,errorField);
+                } else {
+                    validateField(dataPath+'.'+rowKey,control,row,errorField);
+                }
+            }
+        }
+    });
+}
+
+const valueValidate=(controls,values,errorField)=>{
+    controls.forEach(control => {
+        if(control.field){
+            for(const rowKey in values){
+                const row=values[rowKey];
+                if(control.controls){
+                    subValueValidate(rowKey+'.list',control.controls,row[control.field].list,errorField);
+                } else {
+                    validateField(rowKey,control,row,errorField);
+                }
+            }
+        }
+    });
 }
 
 export {
-    validateField
+    valueValidate
 }

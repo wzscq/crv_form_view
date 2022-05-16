@@ -7,23 +7,50 @@ import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 //import './index.css';
 const {TextArea} = Input;
 
-export default function TextAreaControl({control,field}){
+export default function TextAreaControl({dataPath,control,field}){
     const dispatch=useDispatch();
     const inputRef = useRef(null);
-    const selectOriginValue=(state,field)=>state.data.origin[field];
-    const selectModifiedValue=(state,field)=>state.data.modified[field];
-    const selectValueError=(state,field)=>state.data.errorField[field];
-    const selectValue=createSelector(selectOriginValue,selectModifiedValue,selectValueError,(originValue,modifiedValue,valueError)=>{
-        return {originValue,modifiedValue,valueError}
+    
+    const selectUpdatedValue=(data,dataPath,field)=>{
+        let updatedNode=data.updated;
+        
+        for(let i=0;i<dataPath.length;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return undefined;
+            }
+        }
+        
+        return updatedNode[field];
+    };
+
+    const selectValueError=(data,dataPath,field)=>{
+        let errNode=data.errorField;
+        for(let i=0;i<dataPath.length;++i){
+            errNode=errNode[dataPath[i]];
+            if(!errNode){
+                return undefined;
+            }
+        }
+        return errNode[field];
+    }
+
+    const selectValue=createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+        return {updatedValue,valueError}
     });
     
-    const {originValue,modifiedValue,valueError}=useSelector(state=>selectValue(state.data,field.field));
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
 
-    console.log('valueError:',valueError);
-    
     const onChange=(e)=>{
-        console.log(e.target.value);
-        dispatch(modiData({field:field.field,modified:e.target.value,modification:e.target.value}));
+        dispatch(modiData({
+            dataPath:dataPath,
+            field:field.field,
+            updated:e.target.value,
+            update:e.target.value}));
+        
         if(valueError){
             dispatch(removeErrorField(field.field));
         }
@@ -44,7 +71,7 @@ export default function TextAreaControl({control,field}){
     let inputControl=(
         <TextArea  
             placeholder={control.placeholder?control.placeholder:""} 
-            value={modifiedValue!==undefined?modifiedValue:originValue} 
+            value={updatedValue} 
             allowClear
             rows={control.textRowCount}
             disabled={control.disabled} 
@@ -69,5 +96,5 @@ export default function TextAreaControl({control,field}){
                 {inputControl}
             </Space>
         </div>
-    )
+    );
 }
