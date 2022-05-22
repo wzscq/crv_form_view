@@ -7,6 +7,7 @@ import DatePicker from './DatePicker';
 import TextArea from './TextArea';
 import EditTable from './EditTable';
 import FunctionTextArea from './FunctionTextArea';
+import ImageList from './ImageList';
 /**
  * 以下为控件类型枚举常量定义
  */
@@ -20,6 +21,7 @@ import FunctionTextArea from './FunctionTextArea';
     SINGLESELECT:'SingleSelect',  //单选下拉框
     EDITTABLE:'EditTable',  //表格编辑控件
     FUNCTIONTEXTAREA:'FunctionTextArea', //函数计算文本控件
+    IMAGELIST:'ImageList', //图片文件列表
 }
 
 /**
@@ -34,7 +36,8 @@ export const controlRegister={
     [CONTROL_TYPE.DATEPICKER]:DatePicker,
     [CONTROL_TYPE.TEXTAREA]:TextArea,
     [CONTROL_TYPE.EDITTABLE]:EditTable,
-    [CONTROL_TYPE.FUNCTIONTEXTAREA]:FunctionTextArea
+    [CONTROL_TYPE.FUNCTIONTEXTAREA]:FunctionTextArea,
+    [CONTROL_TYPE.IMAGELIST]:ImageList
 }
 
 export const getControl=(control,field,sendMessageToParent,dataPath)=>{
