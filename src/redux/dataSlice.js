@@ -96,9 +96,14 @@ export const dataSlice = createSlice({
         createRow:(state,action)=>{
             const rowKey='__c__'+gRowIdx++;
             const dataPath=action.payload;
-            const {updateNode,updatedNode}=getUpdateNodes(state,dataPath);
-            updateNode[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
-            updatedNode[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
+            if(dataPath.length>0){
+                const {updateNode,updatedNode}=getUpdateNodes(state,dataPath);
+                updateNode[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
+                updatedNode[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
+            } else {
+                state.update[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
+                state.updated[rowKey]={[CC_COLUMNS.CC_SAVE_TYPE]:SAVE_TYPE.CREATE};
+            }
         },
         deleteRow:(state,action)=>{
             const {dataPath,rowKey}=action.payload;

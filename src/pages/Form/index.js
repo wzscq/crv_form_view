@@ -93,7 +93,7 @@ export default function Form(){
                 }
             } else if(formType===FORM_TYPE.CREATE){
                 //FORM_TYPE.CREATE
-                dispatch(createRow());
+                dispatch(createRow([]));
             }
         }
     },[loaded,dataLoaded,forms,fields,formType,item,origin,dispatch,sendMessageToParent]);
