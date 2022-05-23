@@ -93,17 +93,19 @@ export default function FileControl({dataPath,control,field,sendMessageToParent}
         }):[];
 
         const list = addList.concat(delList).filter(item=>item[CC_COLUMNS.CC_SAVE_TYPE]);
-        dispatch(modiData({
-            dataPath:dataPath,
-            field:field.field,
-            updated:{
-                fieldType:field.fieldType,
-                list:data
-            },
-            update:{
-                fieldType:field.fieldType,
-                list:list
-            }}));
+        if(list.length>0){
+            dispatch(modiData({
+                dataPath:dataPath,
+                field:field.field,
+                updated:{
+                    fieldType:field.fieldType,
+                    list:data
+                },
+                update:{
+                    fieldType:field.fieldType,
+                    list:list
+                }}));
+        }
     },[fileList,dispatch,field,dataPath,originValue]);
 
     const props = {
