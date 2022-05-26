@@ -30,7 +30,16 @@ export default function FunctionTextArea({dataPath,control}){
     });
 
     const func=useMemo(()=>{
-        return Function('"use strict";return (function(data){'+control.function+'})')();
+        const funStr='"use strict";'+
+                     'return (function(data){ '+
+                        'try {'+
+                           control.function+
+                        '} catch(e) {'+
+                        '   console.error(e);'+
+                        '   return undefined;'+
+                        '}'+
+                     '})';
+        return Function(funStr)();
     },[control]);
 
     const textControl=(
