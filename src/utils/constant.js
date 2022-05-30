@@ -46,7 +46,8 @@ export const DATA_TYPE={
 export const FORM_TYPE={
     CREATE:"FORM_TYPE_CREATE",
     EDIT:'FORM_TYPE_EDIT',
-    DETAIL:'FORM_TYPE_DETAIL'
+    DETAIL:'FORM_TYPE_DETAIL',
+    UPDATE:'FORM_TYPE_UPDATE'
 }
 
 //系统默认字段，这些字段有特殊用户，用户字段不能和这些字段重复

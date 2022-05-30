@@ -1,4 +1,5 @@
-import { Button,Space } from "antd"
+import { Button,Space } from "antd";
+import {useCallback} from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 
@@ -17,48 +18,51 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
     const {updated,origin,update}=useSelector(state=>{
         return state.data
     });
+    const {item}=useSelector(state=>state.frame);
     const {modelID,formType}=useParams();
     
-    const getUpdateRequestData=(controls,data)=>{
-        const list=[];
-        for(const rowKey in data){
-            const rowData={...data[rowKey]};
-            list.push(rowData);
-            for(const controlIdx in controls){
-                let {controls:subControls,field,relatedModelID,fieldType,associationModelID,relatedField}=controls[controlIdx];
-                if(subControls){
-                    if(rowData[field]&&rowData[field].list){
-                        const fieldList=rowData[field].list;
-                        rowData[field]={
-                            ...rowData[field],
-                            modelID:relatedModelID,
-                            fieldType:fieldType,
-                            associationModelID:associationModelID,
-                            relatedField:relatedField,
-                            list:{}};
-                        rowData[field].list=getUpdateRequestData(subControls,fieldList);
+    const getOperationData=useCallback((update)=>{
+        const getUpdateRequestData=(controls,data)=>{
+            const list=[];
+            for(const rowKey in data){
+                const rowData={...data[rowKey]};
+                list.push(rowData);
+                for(const controlIdx in controls){
+                    let {controls:subControls,field,relatedModelID,fieldType,associationModelID,relatedField}=controls[controlIdx];
+                    if(subControls){
+                        if(rowData[field]&&rowData[field].list){
+                            const fieldList=rowData[field].list;
+                            rowData[field]={
+                                ...rowData[field],
+                                modelID:relatedModelID,
+                                fieldType:fieldType,
+                                associationModelID:associationModelID,
+                                relatedField:relatedField,
+                                list:{}};
+                            rowData[field].list=getUpdateRequestData(subControls,fieldList);
+                        }
                     }
                 }
             }
+            return list;
+        };
+    
+        const getDetailRequestData=(data)=>{
+            const list=[];
+            for(const rowKey in data){
+                const rowData=data[rowKey];
+                list.push({[
+                    [CC_COLUMNS.CC_ID]]:rowData[CC_COLUMNS.CC_ID],
+                    [CC_COLUMNS.CC_VERSION]:rowData[CC_COLUMNS.CC_VERSION]
+                });
+            }
+            return list;
         }
-        return list;
-    }
-
-    const getDetailRequestData=(data)=>{
-        const list=[];
-        for(const rowKey in data){
-            const rowData=data[rowKey];
-            list.push({[
-                [CC_COLUMNS.CC_ID]]:rowData[CC_COLUMNS.CC_ID],
-                [CC_COLUMNS.CC_VERSION]:rowData[CC_COLUMNS.CC_VERSION]
-            });
-        }
-        return list;
-    }
-
-    const getOperationData=(update)=>{
+        
+        
         if(formType===FORM_TYPE.CREATE||
-           formType===FORM_TYPE.EDIT
+           formType===FORM_TYPE.EDIT||
+           formType===FORM_TYPE.UPDATE
         ){
             const list=getUpdateRequestData(form.controls,update);
             return {
@@ -73,20 +77,23 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
             };
         }
         return {}
-    };
 
-    const validateData=(updated)=>{
-        let errorField={errorField:{}};
-        valueValidate(form.controls,updated,errorField);  
-        errorField=errorField.errorField;
-        const errFieldCount=Object.keys(errorField).length;
-        if(errFieldCount>0){
-            dispatch(setErrorField(errorField));
-        }
-        return (errFieldCount<=0);
-    };
+    },[formType,origin,modelID,form.controls]);
 
-    const doOperation=(operation,update,updated)=>{
+    
+
+    const doOperation=useCallback((operation)=>{
+        const validateData=(updated)=>{
+            let errorField={errorField:{}};
+            valueValidate(form.controls,updated,errorField);  
+            errorField=errorField.errorField;
+            const errFieldCount=Object.keys(errorField).length;
+            if(errFieldCount>0){
+                dispatch(setErrorField(errorField));
+            }
+            return (errFieldCount<=0);
+        };
+        
         if(operation){
             if(operation.validateFormData!==false){
                 //验证表单数据合法性
@@ -96,18 +103,22 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
                 }
             }
             const operationData=getOperationData(update);
+            let input={...operation.input,...operationData};
+            if(formType===FORM_TYPE.UPDATE){
+                input={...item.input,...input}
+            }
             const message={
                 type:FRAME_MESSAGE_TYPE.DO_OPERATION,
                 data:{
                     operationItem:{
                         ...operation,
-                        input:{...operation.input,...operationData}
+                        input:input
                     }
                 }
             };
             sendMessageToParent(message);
         }
-    }
+    },[item,formType,update,updated,getOperationData,sendMessageToParent,dispatch,form.controls]);
 
     return (
         <>
@@ -116,7 +127,7 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
                 <Space>
                     {
                         operations.map(element=>{
-                            return (<Button type="primary" onClick={()=>doOperation(element,update,updated)}>{element.name}</Button>);
+                            return (<Button type="primary" onClick={()=>doOperation(element)}>{element.name}</Button>);
                         })
                     }
                 </Space>

@@ -45,34 +45,34 @@ export default function Form(){
         return [];
     }
 
-    const getFormFields=(form,modelFields)=>{
-        const fields=[{field:'id'},{field:'version'}];
-        if(form&&form.controls){
-            form.controls.forEach(element=>{
-                if(element.field !== 'id'&&element.field !== 'version'){
-                    const modelField=modelFields.find(item=>item.field===element.field);
-                    if(modelField){
-                        if(modelField.fieldType){
-                            fields.push({
-                                field:element.field,
-                                fieldType:modelField.fieldType,
-                                relatedModelID:modelField.relatedModelID,
-                                relatedField:modelField.relatedField,
-                                associationModelID:modelField.associationModelID,
-                                fields:getControlFields(element)
-                            });
-                        } else {
-                            fields.push({field:element.field});
-                        }
-                    }
-                }
-            });
-        }
-        return fields;
-    }
-
     //加载数据
     useEffect(()=>{
+        const getFormFields=(form,modelFields)=>{
+            const fields=[{field:'id'},{field:'version'}];
+            if(form&&form.controls){
+                form.controls.forEach(element=>{
+                    if(element.field !== 'id'&&element.field !== 'version'){
+                        const modelField=modelFields.find(item=>item.field===element.field);
+                        if(modelField){
+                            if(modelField.fieldType){
+                                fields.push({
+                                    field:element.field,
+                                    fieldType:modelField.fieldType,
+                                    relatedModelID:modelField.relatedModelID,
+                                    relatedField:modelField.relatedField,
+                                    associationModelID:modelField.associationModelID,
+                                    fields:getControlFields(element)
+                                });
+                            } else {
+                                fields.push({field:element.field});
+                            }
+                        }
+                    }
+                });
+            }
+            return fields;
+        }
+        
         if(loaded===true){
             if(dataLoaded===false&&(formType===FORM_TYPE.EDIT||formType===FORM_TYPE.DETAIL)){
             //目前的表单页面仅支持单条数据的编辑和展示
@@ -91,13 +91,13 @@ export default function Form(){
                     };
                     sendMessageToParent(createQueryDataMessage(frameParams,queryParams));
                 }
-            } else if(formType===FORM_TYPE.CREATE){
+            } else if(formType===FORM_TYPE.CREATE||formType===FORM_TYPE.UPDATE){
                 //FORM_TYPE.CREATE
                 dispatch(createRow([]));
             }
         }
     },[loaded,dataLoaded,forms,fields,formType,item,origin,dispatch,sendMessageToParent]);
-    const showForm=loaded===true&&(dataLoaded===true||formType===FORM_TYPE.CREATE);
+    const showForm=loaded===true&&(dataLoaded===true||formType===FORM_TYPE.CREATE||formType===FORM_TYPE.UPDATE);
     return (
         showForm?<FormView fromTitle={item.params.title} formType={formType} sendMessageToParent={sendMessageToParent}/>:<PageLoading/>
     );
