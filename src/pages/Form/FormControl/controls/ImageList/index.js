@@ -12,6 +12,7 @@ import {
 } from '../../../../../utils/constant';
 import {createDownloadFileMessage} from '../../../../../utils/normalOperations';
 import Preview from './Preview';
+import I18nLabel from '../../../../../component/I18nLabel';
 
 export default function ImageList({dataPath,control,field,sendMessageToParent}){
     const {origin,item:frameItem}=useSelector(state=>state.frame);
@@ -210,14 +211,16 @@ export default function ImageList({dataPath,control,field,sendMessageToParent}){
             {(fileList.length<control.maxCount)?(
                 <div>
                     <PlusOutlined />
-                    <div style={{ marginTop: 8 }}>选择文件</div>
+                    <div style={{ marginTop: 8 }}>
+                        <I18nLabel label={control.selectButtonLabel?control.selectButtonLabel:'选择图片'}/>
+                    </div>
                 </div>
             ):null}
         </Upload>
     );
 
     fileControl=valueError?(
-        <Tooltip title={valueError.message}>
+        <Tooltip title={<I18nLabel label={valueError.message}/>}>
             {fileControl}
         </Tooltip>):fileControl;
     
@@ -226,7 +229,7 @@ export default function ImageList({dataPath,control,field,sendMessageToParent}){
             <Space size={2} direction="vertical" style={{}}>
                 <div style={{width:'100%',textAlign:'left'}}>
                     {control.required?(<span style={{color:'red'}}>*</span>):null}
-                    {label}
+                    <I18nLabel label={label}/>
                 </div>
                 {fileControl} 
             </Space>

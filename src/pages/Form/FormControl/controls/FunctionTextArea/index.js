@@ -2,6 +2,8 @@ import {Input,Space} from 'antd';
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import I18nLabel from '../../../../../component/I18nLabel';
+
 const {TextArea} = Input;
 
 export default function FunctionTextArea({dataPath,control}){
@@ -54,7 +56,7 @@ export default function FunctionTextArea({dataPath,control}){
         <div>
             <Space size={2} direction="vertical" style={{width:'100%'}}>
                 <div style={{width:'100%',textAlign:'left'}}>
-                    {control.label}
+                    <I18nLabel label={control.label}/>
                 </div>
                 {textControl}
             </Space>

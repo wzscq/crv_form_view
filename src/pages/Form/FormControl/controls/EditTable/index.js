@@ -8,7 +8,7 @@ import {
     createRow,
     deleteRow
 } from '../../../../../redux/dataSlice';
-
+import I18nLabel from '../../../../../component/I18nLabel';
 import './index.css';
 import { useCallback } from 'react';
 
@@ -52,7 +52,7 @@ export default function EditTable({dataPath,control,field,sendMessageToParent}){
             <Space size={2} direction="vertical" style={{width:'100%'}}>
                 <div style={{width:'100%',textAlign:'left'}}>
                     {control.required?(<span style={{color:'red'}}>*</span>):null}
-                    {label}
+                    <I18nLabel label={label}/>
                 </div>
                 <div className='control-edittable'>
                     <div className='control-edittable-header-wrapper'>

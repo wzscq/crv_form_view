@@ -10,10 +10,12 @@ import {
 } from '../../../utils/constant';
 import {setErrorField} from '../../../redux/dataSlice';
 import {valueValidate} from '../valueValidate';
+import useI18n from '../../../hook/useI18n';
 
 import './index.css';
 
 export default function FormHeader({label,operations,form,sendMessageToParent}){
+    const {getLocaleLabel}=useI18n();
     const dispatch=useDispatch();
     const {updated,origin,update}=useSelector(state=>{
         return state.data
@@ -81,7 +83,6 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
     },[formType,origin,modelID,form.controls]);
 
     
-
     const doOperation=useCallback((operation)=>{
         const validateData=(updated)=>{
             let errorField={errorField:{}};
@@ -122,12 +123,12 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
 
     return (
         <>
-            <div className="form-header-label">{label}</div>
+            <div className="form-header-label">{label?getLocaleLabel(label):label}</div>
             <div className="form-header-operationbar">
                 <Space>
                     {
                         operations.map(element=>{
-                            return (<Button type="primary" onClick={()=>doOperation(element)}>{element.name}</Button>);
+                            return (<Button type="primary" onClick={()=>doOperation(element)}>{getLocaleLabel(element.name)}</Button>);
                         })
                     }
                 </Space>

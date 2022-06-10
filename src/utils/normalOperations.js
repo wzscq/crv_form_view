@@ -16,7 +16,7 @@ const opGetModelConf={
         method:"post"
     },
     input:{},
-    description:"获取模型表单配置信息"
+    description:{key:'page.crvformview.getFormConfig',default:'获取模型表单配置信息'}
 }
 
 export function createGetFormConfMessage(frameParams,modelID,formID){
@@ -47,7 +47,7 @@ const opQueryData={
         method:"post"
     },
     input:{},
-    description:"查询模型数据"
+    description:{key:'page.crvformview.queryData',default:'查询模型数据'}
 }
 
 /**
@@ -72,7 +72,7 @@ const opDownloadFile={
         fileName:"downloadFile",
     },
     input:{},
-    description:"下载文件"
+    description:{key:'page.crvformview.downloadFile',default:'下载文件'}
 }
 
 export function createDownloadFileMessage(file,fileName){

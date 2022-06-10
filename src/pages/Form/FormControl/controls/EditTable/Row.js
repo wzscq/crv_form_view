@@ -21,6 +21,7 @@ export default function Row({dataPath,control,rowKey,onDeleteRow,sendMessageToPa
 
     gridTemplateColumns+=' 30px';
     columns.push(<DeleteRowButton 
+        lable={control.deleteButtonLabel}
         disabled={control.disabled} 
         colNo={columns.length}
         rowKey={rowKey} 

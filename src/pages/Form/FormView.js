@@ -1,12 +1,23 @@
 import { useMemo } from 'react';
 import {useSelector} from 'react-redux';
+import {ConfigProvider} from 'antd';
+import zh_CN from 'antd/lib/locale/zh_CN';
+import en_US from 'antd/lib/locale/en_US';
+
 
 import FormControl from './FormControl';
 import FormHeader from './FormHeader';
 import { FORM_TYPE } from '../../utils/constant';
 import './FormView.css';
+import useI18n from '../../hook/useI18n';
+
+const locales={
+    zh_CN:zh_CN,
+    en_US:en_US
+}
 
 export default function FormView({fromTitle,formType,sendMessageToParent}){
+    const {locale}=useI18n();
     const {forms,fields,operations} = useSelector(state=>state.definition);
     const rowKey = useSelector(state=>{
         return Object.keys(state.data.updated)[0]
@@ -92,18 +103,20 @@ export default function FormView({fromTitle,formType,sendMessageToParent}){
     },[form,operations]);
 
     return (
-        <div className='form-view'>
-            <div className='form-header'>
-                <FormHeader sendMessageToParent={sendMessageToParent} form={form} label={headerLabel} operations={headerOperations} />
-            </div>
-            <div className='form-content'>
-                <div className='form-grid' style={{gridTemplateColumns: "repeat("+colCount+", 1fr)",gridAutoRows:"minmax("+rowHeight+"px, auto)"}}>
-                    {controls}
+        <ConfigProvider locale={locales[locale]}>
+            <div className='form-view'>
+                <div className='form-header'>
+                    <FormHeader sendMessageToParent={sendMessageToParent} form={form} label={headerLabel} operations={headerOperations} />
+                </div>
+                <div className='form-content'>
+                    <div className='form-grid' style={{gridTemplateColumns: "repeat("+colCount+", 1fr)",gridAutoRows:"minmax("+rowHeight+"px, auto)"}}>
+                        {controls}
+                    </div>
+                </div>
+                <div className='form-footer'>
+                    <FormHeader sendMessageToParent={sendMessageToParent} form={form}  label={footLabel} operations={footOperations} />
                 </div>
             </div>
-            <div className='form-footer'>
-                <FormHeader sendMessageToParent={sendMessageToParent} form={form}  label={footLabel} operations={footOperations} />
-            </div>
-        </div>
+        </ConfigProvider>
     );
 }

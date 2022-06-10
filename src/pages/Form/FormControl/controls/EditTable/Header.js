@@ -1,4 +1,5 @@
 import AddRowButton from "./AddRowButton";
+import I18nLabel from "../../../../../component/I18nLabel";
 
 export default function Header({control,onAddNewRow}){
     let gridTemplateColumns='';
@@ -18,12 +19,14 @@ export default function Header({control,onAddNewRow}){
             padding:2}
 
         return (
-            <div style={wrapperStyle}>{field.label}</div>
+            <div style={wrapperStyle}>
+                <I18nLabel label={field.label}/>
+            </div>
         );
     });
 
     gridTemplateColumns+=' 30px';
-    columns.push(<AddRowButton disabled={control.disabled} colNo={columns.length} onAddNewRow={onAddNewRow}/>);
+    columns.push(<AddRowButton label={control.addButtonLable} disabled={control.disabled} colNo={columns.length} onAddNewRow={onAddNewRow}/>);
 
     return (
         <div style={{display:'grid',gridTemplateColumns:gridTemplateColumns,gridAutoRows:'minmax(20px, auto)'}}>

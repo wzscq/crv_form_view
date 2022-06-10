@@ -10,6 +10,7 @@ import {
     SAVE_TYPE
 } from '../../../../../utils/constant';
 import {createDownloadFileMessage} from '../../../../../utils/normalOperations';
+import I18nLabel from '../../../../../component/I18nLabel';
 
 import './index.css';
 
@@ -141,12 +142,18 @@ export default function FileControl({dataPath,control,field,sendMessageToParent}
 
     let fileControl=(
         <Upload {...props}>
-            {(fileList.length<control.maxCount)?(<Button danger={valueError?true:false} disabled={control.disabled} icon={<UploadOutlined />}>选择文件</Button>):null}
+            {
+                (fileList.length<control.maxCount)?(
+                    <Button danger={valueError?true:false} disabled={control.disabled} icon={<UploadOutlined />}>
+                        <I18nLabel label={control.selectButtonLabel?control.selectButtonLabel:'选择文件'}/>
+                    </Button>
+                ):null
+            }
         </Upload>
     );
 
     fileControl=valueError?(
-        <Tooltip title={valueError.message}>
+        <Tooltip title={<I18nLabel label={valueError.message}/>}>
             {fileControl}
         </Tooltip>):fileControl;
     
@@ -155,7 +162,7 @@ export default function FileControl({dataPath,control,field,sendMessageToParent}
             <Space size={2} direction="vertical" style={{}}>
                 <div style={{width:'100%',textAlign:'left'}}>
                     {control.required?(<span style={{color:'red'}}>*</span>):null}
-                    {label}
+                    <I18nLabel label={label}/>
                 </div>
                 {fileControl} 
             </Space>

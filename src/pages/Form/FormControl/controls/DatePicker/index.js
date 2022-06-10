@@ -4,6 +4,7 @@ import { useEffect,useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import moment from 'moment';
 
+import I18nLabel from '../../../../../component/I18nLabel';
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 //import './index.css';
 
@@ -80,7 +81,7 @@ export default function DatePickerControl({dataPath,control,field}){
     );
 
     datePickerControl=valueError?(
-        <Tooltip title={valueError.message}>
+        <Tooltip title={<I18nLabel label={valueError.message}/>}>
             {datePickerControl}
         </Tooltip>):datePickerControl;
 
@@ -92,7 +93,7 @@ export default function DatePickerControl({dataPath,control,field}){
             <Space size={2} direction="vertical" style={{width:'100%'}}>
                 <div style={{width:'100%',textAlign:'left'}}>
                     {control.required?(<span style={{color:'red'}}>*</span>):null}
-                    {label}
+                    <I18nLabel label={label}/>
                 </div>
                 {datePickerControl}
             </Space>

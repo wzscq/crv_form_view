@@ -5,6 +5,7 @@ import {useRef,useEffect} from 'react';
 
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 import {encodePassword} from '../../../../../utils/passwordEncoder';
+import I18nLabel from '../../../../../component/I18nLabel';
 
 export default function Password({dataPath,control,field}){
     const dispatch=useDispatch();
@@ -78,7 +79,7 @@ export default function Password({dataPath,control,field}){
     },[valueError,inputRef]);
     
     passwordControl=valueError?(
-        <Tooltip title={valueError.message}>
+        <Tooltip title={<I18nLabel label={valueError.message}/>}>
             {passwordControl}
         </Tooltip>):passwordControl
 
@@ -90,7 +91,7 @@ export default function Password({dataPath,control,field}){
             <Space size={2} direction="vertical" style={{width:'100%'}}>
                 <div style={{width:'100%',textAlign:'left'}}>
                     {control.required?(<span style={{color:'red'}}>*</span>):null}
-                    {label}
+                    <I18nLabel label={label}/>
                 </div>
                 {passwordControl}
             </Space>

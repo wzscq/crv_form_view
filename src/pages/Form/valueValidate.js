@@ -11,16 +11,16 @@ const validateField=(dataPath,control,rowValue,errorField)=>{
                    rowValue[field].fieldType===FIELD_TYPE.MANY2ONE||
                    rowValue[field].fieldType===FIELD_TYPE.FILE){
                     if(!(rowValue[field].list&&rowValue[field].list.length>0)){
-                        errorField.errorField[dataPath+'.'+field]={message:'必填字段！'}; 
+                        errorField.errorField[dataPath+'.'+field]={message:{key:'page.crvformview.requiredField',default:'必填字段！'}}; 
                     }
                 }
             } else {
                 if(rowValue[field].length<=0){
-                    errorField.errorField[dataPath+'.'+field]={message:'必填字段！'};
+                    errorField.errorField[dataPath+'.'+field]={message:{key:'page.crvformview.requiredField',default:'必填字段！'}};
                 }
             }
         } else {
-            errorField.errorField[dataPath+'.'+field]={message:'必填字段！'};
+            errorField.errorField[dataPath+'.'+field]={message:{key:'page.crvformview.requiredField',default:'必填字段！'}};
         }
     }
 }
