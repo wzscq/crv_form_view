@@ -66,7 +66,11 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
            formType===FORM_TYPE.EDIT||
            formType===FORM_TYPE.UPDATE
         ){
-            const list=getUpdateRequestData(form.controls,update);
+            let list=getUpdateRequestData(form.controls,update);
+            //编辑状态下，如果用户没有录入任何数据，list是空的，这时因为数据都没有做修改，因此将返回和详情页面相同的数据
+            /*if(formType===FORM_TYPE.EDIT&&list.length===0){
+                list=getDetailRequestData(origin);
+            }*/
             return {
                 modelid:modelID,
                 list:list
