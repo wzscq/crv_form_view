@@ -11,7 +11,7 @@ const { Option } = Select;
 
 export default function SingleSelectForOptions({dataPath,control,field}){
     const dispatch=useDispatch();
-    
+
     const selectUpdatedValue=(data,dataPath,field)=>{
         let updatedNode=data.updated;
         for(let i=0;i<dataPath.length;++i){
@@ -62,11 +62,13 @@ export default function SingleSelectForOptions({dataPath,control,field}){
     const label=control.label?control.label:(field?field.name:"");
 
     const options=control.options.map((item,index)=>
-    (<Option key={index} value={item.value}>{item.label}</Option>));
+    (<Option key={index} value={item.value}>
+        <I18nLabel label={item.label}/>
+    </Option>));
     
     let selectControl= (<Select  
         style={{width:'100%'}}  
-        placeholder={control.placeholder?control.placeholder:""} 
+        placeholder={control.placeholder?<I18nLabel label={control.placeholder}/>:""} 
         value={updatedValue} 
         allowClear
         disabled={control.disabled} 
