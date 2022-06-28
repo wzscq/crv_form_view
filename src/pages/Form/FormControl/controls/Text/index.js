@@ -1,40 +1,43 @@
 import { createSelector } from '@reduxjs/toolkit';
 import {Input,Space,Tooltip } from 'antd';
-import { useEffect,useRef } from 'react';
+import { useEffect,useMemo,useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import I18nLabel from '../../../../../component/I18nLabel';
 import { modiData,removeErrorField } from '../../../../../redux/dataSlice';
 
-export default function Text({dataPath,control,field}){
-    const dispatch=useDispatch();
-    const inputRef = useRef(null);
-        
-    const selectUpdatedValue=(data,dataPath,field)=>{
-        let updatedNode=data.updated;
-        
-        for(let i=0;i<dataPath.length;++i){
-            updatedNode=updatedNode[dataPath[i]];
-            if(!updatedNode){
-                return undefined;
-            }
+const selectUpdatedValue=(data,dataPath,field)=>{
+    let updatedNode=data.updated;
+    
+    for(let i=0;i<dataPath.length;++i){
+        updatedNode=updatedNode[dataPath[i]];
+        if(!updatedNode){
+            return undefined;
         }
-        
-        return updatedNode[field];
-    };
-
-    const selectValueError=(data,dataPath,field)=>{
-        const errFieldPath=dataPath.join('.')+'.'+field;
-        return data.errorField[errFieldPath];
     }
+    
+    return updatedNode[field];
+};
 
-    const selectValue=createSelector(
+const selectValueError=(data,dataPath,field)=>{
+    const errFieldPath=dataPath.join('.')+'.'+field;
+    return data.errorField[errFieldPath];
+}
+
+const makeSelector=()=>{
+    return createSelector(
         selectUpdatedValue,
         selectValueError,
         (updatedValue,valueError)=>{
         return {updatedValue,valueError}
     });
-    
+}
+
+export default function Text({dataPath,control,field}){
+    const dispatch=useDispatch();
+    const inputRef = useRef(null);
+        
+    const selectValue=useMemo(makeSelector,[dataPath,control,field]);
     const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
 
     const onChange=(e)=>{

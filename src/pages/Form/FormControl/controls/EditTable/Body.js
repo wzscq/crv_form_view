@@ -1,7 +1,7 @@
 import Row from "./Row";
 
-export default function Body({dataPath,control,data,onDeleteRow,sendMessageToParent}){
-    const rows=(data&&data.list)?Object.keys(data.list).map((rowKey,index)=>{
+export default function Body({dataPath,control,rowKeys,onDeleteRow,sendMessageToParent}){
+    const rows=rowKeys.map((rowKey,index)=>{
         return (
             <Row 
                 dataPath={[...dataPath,rowKey]}
@@ -12,7 +12,7 @@ export default function Body({dataPath,control,data,onDeleteRow,sendMessageToPar
                 sendMessageToParent={sendMessageToParent}
             />
         );
-    }):null;
+    });
     
     return (
         <>

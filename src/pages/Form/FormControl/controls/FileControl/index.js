@@ -14,33 +14,36 @@ import I18nLabel from '../../../../../component/I18nLabel';
 
 import './index.css';
 
-export default function FileControl({dataPath,control,field,sendMessageToParent}){
-    const dispatch=useDispatch();
-    
-    const selectOriginValue=(data,dataPath,field)=>{
-        let originNode=data.origin;
-        for(let i=0;i<dataPath.length;++i){
-            originNode=originNode[dataPath[i]];
-            if(!originNode){
-                return undefined;
-            }
+const selectOriginValue=(data,dataPath,field)=>{
+    let originNode=data.origin;
+    for(let i=0;i<dataPath.length;++i){
+        originNode=originNode[dataPath[i]];
+        if(!originNode){
+            return undefined;
         }
-        return originNode[field];
-    };
+    }
+    return originNode[field];
+};
 
-    const selectValueError=(data,dataPath,field)=>{
-        const errFieldPath=dataPath.join('.')+'.'+field;
-        return data.errorField[errFieldPath];
-    };
+const selectValueError=(data,dataPath,field)=>{
+    const errFieldPath=dataPath.join('.')+'.'+field;
+    return data.errorField[errFieldPath];
+};
 
-    const selectValue=createSelector(
+const makeSelector=()=>{
+    return createSelector(
         selectOriginValue,
         selectValueError,
         (originValue,valueError)=>{
             return {originValue,valueError};
         }
     );
+}
+
+export default function FileControl({dataPath,control,field,sendMessageToParent}){
+    const dispatch=useDispatch();
     
+    const selectValue=useMemo(makeSelector,[dataPath,control,field]);
     const {originValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
 
     const initFileList=useMemo(()=>{

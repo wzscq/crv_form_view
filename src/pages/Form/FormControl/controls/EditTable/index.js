@@ -10,30 +10,44 @@ import {
 } from '../../../../../redux/dataSlice';
 import I18nLabel from '../../../../../component/I18nLabel';
 import './index.css';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+
+const selectUpdatedValue=(data,dataPath,field)=>{
+    let updatedNode=data.updated;
+    for(let i=0;i<dataPath.length;++i){
+        updatedNode=updatedNode[dataPath[i]];
+        if(!updatedNode){
+            return undefined;
+        }
+    }
+    return updatedNode[field];
+};
+
+const resultEqualityCheck=(a,b)=>{
+    console.log('resultEqualityCheck',a,b);
+    return (JSON.stringify(a)===JSON.stringify(b));
+}
+
+const makeSelector=()=>{
+    return createSelector(
+        selectUpdatedValue,
+        (updatedValue)=>{
+            const rowKeys=updatedValue.list?Object.keys(updatedValue.list):[];
+            return {rowKeys};
+        },
+        {
+            memoizeOptions:{
+                resultEqualityCheck:resultEqualityCheck 
+            }
+        }
+    );
+}
 
 export default function EditTable({dataPath,control,field,sendMessageToParent}){
     const dispatch=useDispatch();
     
-    const selectUpdatedValue=(data,dataPath,field)=>{
-        let updatedNode=data.updated;
-        for(let i=0;i<dataPath.length;++i){
-            updatedNode=updatedNode[dataPath[i]];
-            if(!updatedNode){
-                return undefined;
-            }
-        }
-        return updatedNode[field];
-    };
-
-    const selectValue=createSelector(
-        selectUpdatedValue,
-        (updatedValue)=>{
-            return {updatedValue};
-        }
-    );
-
-    const {updatedValue}=useSelector(state=>selectValue(state.data,dataPath,field.field));
+    const selectValue=useMemo(makeSelector,[dataPath,control,field]);
+    const {rowKeys}=useSelector(state=>selectValue(state.data,dataPath,field.field));
     
     const onAddNewRow=useCallback(()=>{
         dispatch(createRow([...dataPath,field.field,'list']));
@@ -63,7 +77,7 @@ export default function EditTable({dataPath,control,field,sendMessageToParent}){
                             dataPath={[...dataPath,field.field,'list']}
                             sendMessageToParent={sendMessageToParent} 
                             control={control} 
-                            data={updatedValue} 
+                            rowKeys={rowKeys} 
                             onDeleteRow={onDeleteRow} 
                         />
                     </div>

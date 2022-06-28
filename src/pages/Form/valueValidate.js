@@ -4,6 +4,7 @@ const validateField=(dataPath,control,rowValue,errorField)=>{
     const {required,field}=control;
     
     if(required){
+        console.log('validateField',dataPath,field,rowValue);
         if(rowValue[field]){
             if(rowValue[field].fieldType){
                 if(rowValue[field].fieldType===FIELD_TYPE.MANY2MANY||

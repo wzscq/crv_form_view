@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState,useMemo} from 'react';
 import { createSelector } from '@reduxjs/toolkit';
 import {Select,Space,Tooltip } from 'antd';
 import { useEffect } from 'react';
@@ -12,73 +12,113 @@ import './index.css';
 
 const { Option } = Select;
 
-export default function SingleSelectForManyToOne({dataPath,control,field,sendMessageToParent,cascadeValue}){
+const selectUpdatedValue=(data,dataPath,field)=>{
+    let updatedNode=data.updated;
+    for(let i=0;i<dataPath.length;++i){
+        updatedNode=updatedNode[dataPath[i]];
+        if(!updatedNode){
+            return undefined;
+        }
+    }
+    return updatedNode[field];
+};
+
+const selectValueError=(data,dataPath,field)=>{
+    const errFieldPath=dataPath.join('.')+'.'+field;
+    return data.errorField[errFieldPath];
+};
+
+const getCascadeItemValue=(data,dataPath,field,cascade)=>{
+    if(cascade&&cascade.parentField){
+        let pathDeep=dataPath.length;
+        if(cascade.parentPath){
+            const pathArr=cascade.parentPath.split('/');
+            for(let i=0;i<pathArr.length;++i){
+                if(pathArr[i]==='..'){
+                    /**
+                     *dataPaht的形式类似[rowKey,fieldid,list,rowkey,fieldid,list,rowKey,fieldid,list, ...] 
+                    *当前字段节点的path一定是一个rowKey节点，往上一层需要自动跳转到上一个rowKey节点
+                    *两个rowKey间的间隔是3，因此遇到一个..，则路径深度减3
+                    */
+                    pathDeep-=3;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        let updatedNode=data.updated;
+        for(let i=0;i<pathDeep;++i){
+            updatedNode=updatedNode[dataPath[i]];
+            if(!updatedNode){
+                return {};
+            }
+        }
+        
+        if(updatedNode[cascade.parentField]){
+            const cascadeValue=updatedNode[cascade.parentField];
+            return {[cascade.parentField]:cascadeValue.value};
+        }
+    }
+    
+    return {};
+}
+
+const selectCascadeParentValue=(data,dataPath,field,cascade)=>{
+    if(Array.isArray(cascade)){
+        let cascadeParentValue={};
+        cascade.forEach(cascadeItem=>{
+            cascadeParentValue={...cascadeParentValue,
+                ...(getCascadeItemValue(data,dataPath,field,cascadeItem))     
+            }
+        })
+        return cascadeParentValue;
+    }
+    return getCascadeItemValue(data,dataPath,field,cascade);
+};
+
+const makeSelector=()=>{
+    return createSelector(
+        selectUpdatedValue,
+        selectValueError,
+        (updatedValue,valueError)=>{
+            return {updatedValue,valueError};
+        }
+    );
+}
+
+const resultEqualityCheck=(a,b)=>{
+    console.log('resultEqualityCheck',a,b);
+    return (JSON.stringify(a)===JSON.stringify(b));
+}
+
+const makeCascadeSelector=()=>{
+    console.log('makeCascadeSelector');
+    return createSelector(
+        selectCascadeParentValue,
+        (cascadeParentValue)=>{
+            return cascadeParentValue;
+        },
+        {
+            memoizeOptions:{
+                resultEqualityCheck:resultEqualityCheck 
+            }
+        }
+    );
+}
+
+export default function SingleSelectForManyToOne({dataPath,control,field,sendMessageToParent}){
     const dispatch=useDispatch();
     const {origin,item:frameItem}=useSelector(state=>state.frame);
     
-    const selectUpdatedValue=(data,dataPath,field)=>{
-        let updatedNode=data.updated;
-        for(let i=0;i<dataPath.length;++i){
-            updatedNode=updatedNode[dataPath[i]];
-            if(!updatedNode){
-                return undefined;
-            }
-        }
-        return updatedNode[field];
-    };
+    const selectValue = useMemo(makeSelector, [dataPath,control,field]);
+    const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
 
-    const selectValueError=(data,dataPath,field)=>{
-        const errFieldPath=dataPath.join('.')+'.'+field;
-        return data.errorField[errFieldPath];
-    };
-
-    const selectCascadeParentValue=(data,dataPath,field,cascade)=>{
-        if(cascade&&cascade.parentField){
-            let pathDeep=dataPath.length;
-            if(cascade.parentPath){
-                const pathArr=cascade.parentPath.split('/');
-                for(let i=0;i<pathArr.length;++i){
-                    if(pathArr[i]==='..'){
-                        /**
-                         *dataPaht的形式类似[rowKey,fieldid,list,rowkey,fieldid,list,rowKey,fieldid,list, ...] 
-                         *当前字段节点的path一定是一个rowKey节点，往上一层需要自动跳转到上一个rowKey节点
-                         *两个rowKey间的间隔是3，因此遇到一个..，则路径深度减3
-                         */
-                        pathDeep-=3;
-                    } else {
-                        break;
-                    }
-                }
-            }
-            
-            let updatedNode=data.updated;
-            for(let i=0;i<pathDeep;++i){
-                updatedNode=updatedNode[dataPath[i]];
-                if(!updatedNode){
-                    return undefined;
-                }
-            }
-            
-            if(updatedNode[cascade.parentField]){
-                const cascadeValue=updatedNode[cascade.parentField];
-                return cascadeValue.value?cascadeValue.value:cascadeValue;
-            }
-        }
-        return undefined;
-    };
-
-    const selectValue=createSelector(
-        selectUpdatedValue,
-        selectValueError,
-        selectCascadeParentValue,
-        (updatedValue,valueError,cascadeParentValue)=>{
-            return {updatedValue,valueError,cascadeParentValue};
-        }
-    );
-    
-    const {updatedValue,valueError,cascadeParentValue}=useSelector(state=>selectValue(state.data,dataPath,field.field,control.cascade));
+    const selectCascadeValue = useMemo(makeCascadeSelector, [dataPath,control,field]);
+    const cascadeParentValue=useSelector(state=>selectCascadeValue(state.data,dataPath,field.field,control.cascade));
 
     const [options,setOptions]=useState([]);
+    const [lastCascadeParentValue,setLastCascadeParentValue]=useState(cascadeParentValue);
     
     const onChange=(value)=>{
         if(value===undefined){
@@ -89,11 +129,13 @@ export default function SingleSelectForManyToOne({dataPath,control,field,sendMes
                 value:null,
                 list:[],
                 total:0,
+                fieldType:field.fieldType,
                 modelID:field.relatedModelID
             }:{
                 value:value,
                 list:[options.find(item=>item.id===value)],
                 total:1,
+                fieldType:field.fieldType,
                 modelID:field.relatedModelID
             }
 
@@ -118,6 +160,16 @@ export default function SingleSelectForManyToOne({dataPath,control,field,sendMes
         const op='Op.or';
         return {[op]:fieldsFilter};
     };
+
+    const getCascadeItemFilter=(cascade,cascadeParentValue)=>{
+        if(cascade.type===CASCADE_TYPE.MANY2ONE){
+            if(cascade.relatedField&&cascadeParentValue[cascade.relatedField]){
+                return ({[cascade.relatedField]:cascadeParentValue[cascade.relatedField]});        
+            }
+        } else {
+            console.error('not supported cascade type:',cascade.type);
+        }
+    }
 
     const getQueryParams=(field,control,value)=>{
         /**
@@ -148,35 +200,37 @@ export default function SingleSelectForManyToOne({dataPath,control,field,sendMes
          * 同时以c_id字段查询过滤c表数据。这种情况需要前端再做一次数据过滤。目前程序暂时不实现这个逻辑。
          */
         console.log('getQueryParams',control);
+        const filter=getFilter(control,value)
         if(control.cascade){
-            //情况1
-            if(control.cascade.type===CASCADE_TYPE.MANY2ONE){
-                if(control.cascade.relatedField){
-                    const filter=getFilter(control,value)
-                    const filterbyParent={[control.cascade.relatedField]:cascadeParentValue}
-                    const op='Op.and';
-                    const mergedFilter={[op]:[filterbyParent,filter]};
-                    return {
-                        modelID:field.relatedModelID,
-                        fields:control.fields,
-                        filter:mergedFilter,
-                        pagination:{current:1,pageSize:500}
-                    }        
-                } else {
-                    console.error('do not provide related field.');    
+            const filterCascade=[filter];
+            if(Array.isArray(control.cascade)){
+                control.cascade.forEach(cascadeItem=>{
+                    const filterbyParent=getCascadeItemFilter(cascadeItem,cascadeParentValue);
+                    if(filterbyParent){
+                        filterCascade.push(filterbyParent);
+                    }
+                });
+            } else {
+                const filterbyParent=getCascadeItemFilter(control.cascade,cascadeParentValue);
+                if(filterbyParent){
+                    filterCascade.push(filterbyParent);
                 }
-            } /*else if(control.cascade.type===CASCADE_TYPE.MANY2MANY){
-                
-            }*/else {
-                console.error('not supported cascade type:',control.cascade.type);
             }
-            return undefined;
+                    
+            const op='Op.and';
+            const mergedFilter={[op]:filterCascade};
+            return {
+                modelID:field.relatedModelID,
+                fields:control.fields,
+                filter:mergedFilter,
+                pagination:{current:1,pageSize:500}
+            }
         }
         
         return {
             modelID:field.relatedModelID,
             fields:control.fields,
-            filter:getFilter(control,value),
+            filter:filter,
             pagination:{current:1,pageSize:500}
         }
     }
@@ -221,6 +275,16 @@ export default function SingleSelectForManyToOne({dataPath,control,field,sendMes
             window.removeEventListener("message",queryResponse);
         }
     },[setOptions,field]);
+
+    useEffect(()=>{
+        //当cascadeParentValue发生变化时，清空字段的值
+        //第一次进入时不做清空操作，后续判断 cascadeParentValue 是否发生变化，
+        //如果变化则清空字段值
+        if(JSON.stringify(lastCascadeParentValue)!==JSON.stringify(cascadeParentValue)){
+            setLastCascadeParentValue(cascadeParentValue);
+            onChange();
+        }
+    },[cascadeParentValue]);
 
     const onFocus=()=>{
         onSearch("");

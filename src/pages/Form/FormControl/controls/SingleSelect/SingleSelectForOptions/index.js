@@ -6,36 +6,40 @@ import { modiData,removeErrorField } from '../../../../../../redux/dataSlice';
 import I18nLabel from '../../../../../../component/I18nLabel';
 
 import './index.css';
+import { useMemo } from 'react';
 
 const { Option } = Select;
 
-export default function SingleSelectForOptions({dataPath,control,field}){
-    const dispatch=useDispatch();
-
-    const selectUpdatedValue=(data,dataPath,field)=>{
-        let updatedNode=data.updated;
-        for(let i=0;i<dataPath.length;++i){
-            updatedNode=updatedNode[dataPath[i]];
-            if(!updatedNode){
-                return undefined;
-            }
+const selectUpdatedValue=(data,dataPath,field)=>{
+    let updatedNode=data.updated;
+    for(let i=0;i<dataPath.length;++i){
+        updatedNode=updatedNode[dataPath[i]];
+        if(!updatedNode){
+            return undefined;
         }
-        return updatedNode[field];
-    };
+    }
+    return updatedNode[field];
+};
 
-    const selectValueError=(data,dataPath,field)=>{
-        const errFieldPath=dataPath.join('.')+'.'+field;
-        return data.errorField[errFieldPath];
-    };
+const selectValueError=(data,dataPath,field)=>{
+    const errFieldPath=dataPath.join('.')+'.'+field;
+    return data.errorField[errFieldPath];
+};
 
-    const selectValue=createSelector(
+const makeSelector=()=>{
+    return createSelector(
         selectUpdatedValue,
         selectValueError,
         (updatedValue,valueError)=>{
             return {updatedValue,valueError};
         }
     );
-    
+}
+
+export default function SingleSelectForOptions({dataPath,control,field}){
+    const dispatch=useDispatch();
+
+    const selectValue=useMemo(makeSelector,[dataPath,control,field]);
     const {updatedValue,valueError}=useSelector(state=>selectValue(state.data,dataPath,field.field));
     
     const onChange=(value)=>{
