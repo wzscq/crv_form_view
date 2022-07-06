@@ -109,8 +109,19 @@ export default function FormHeader({label,operations,form,sendMessageToParent}){
             }
             const operationData=getOperationData(update);
             let input={...operation.input,...operationData};
-            if(formType===FORM_TYPE.UPDATE){
-                input={...item.input,...input}
+            if(item.input&&item.input!=={}){
+                if(formType===FORM_TYPE.UPDATE){
+                    input={...item.input,...input}
+                } else {
+                    //以下处理时为了配合流的执行
+                    if(item.input.flowInstanceID){
+                        input.flowInstanceID=item.input.flowInstanceID;
+                    }
+
+                    if(item.input.stage){
+                        input.stage=item.input.stage;
+                    }
+                }
             }
             const message={
                 type:FRAME_MESSAGE_TYPE.DO_OPERATION,

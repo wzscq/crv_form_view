@@ -32,7 +32,6 @@ export default function Form(){
         }
     },[loaded,modelID,formID,origin,item,formType,sendMessageToParent]);
 
-
     const getControlFields=(control)=>{
         if(control.fields){
             return control.fields;
